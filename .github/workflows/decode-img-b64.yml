@@ -8,12 +8,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Assemble and decode image payloads
+      - name: Fetch images from live Pages and verify checksums
         run: |
           set -euo pipefail
           mkdir -p img
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          base='https://danielgueli.pages.dev/img'
+          for f in galli.png hero.jpg kaap.jpg quartet.jpg stage.jpg street.jpg tent.jpg trio.jpg tv.jpg; do
+            curl -fsSL -A "$UA" "$base/$f" -o "img/$f"
+            ls -la "img/$f"
+          done
+          # drop any staged b64 leftovers
+          rm -f img/*.b64
+          rm -rf img/b64_parts
           python3 <<'PY'
-          import hashlib, pathlib, base64
+          import hashlib, pathlib
           expected = {
             "galli.png": ("749dd8cb8c86a270b430b5f68ea8328ab99b68c0a4a90b55678f2bebefbf5709", 6817),
             "hero.jpg": ("eb074d33b90ec73f17a5d2ba179b206c55e72d701285dfb31ef1c5bba6408630", 187436),
@@ -25,29 +34,11 @@ jobs:
             "trio.jpg": ("9d8f99b9f5e63f44d9569ee7d149913d9c7043bcfee608311addf88e067b9f42", 266782),
             "tv.jpg": ("df1196ab998f4c6fa56c8d22cf09eb63bc3887e171aa8fa566c8e5db01607b06", 279121),
           }
-          parts_dir = pathlib.Path("img/b64_parts")
           for name, (sha, size) in expected.items():
-              whole = pathlib.Path(f"img/{name}.b64")
-              if whole.exists():
-                  b64 = "".join(whole.read_text().split())
-                  whole.unlink()
-              else:
-                  prefix = f"{name}.b64."
-                  files = sorted(parts_dir.glob(prefix + "*"))
-                  assert files, name
-                  b64 = "".join("".join(p.read_text().split()) for p in files)
-                  for p in files:
-                      p.unlink()
-              data = base64.b64decode(b64)
-              out = pathlib.Path("img") / name
-              out.write_bytes(data)
+              data = (pathlib.Path("img") / name).read_bytes()
               got = hashlib.sha256(data).hexdigest()
               assert len(data) == size and got == sha, (name, len(data), size, got, sha)
               print("OK", name, size)
-          if parts_dir.exists():
-              for p in list(parts_dir.iterdir()):
-                  p.unlink()
-              parts_dir.rmdir()
           PY
       - name: Commit binary images
         run: |
@@ -58,6 +49,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes"
           else
-            git commit -m "Add cream site binary images (decoded from staged base64)"
+            git commit -m "Add cream site binary images from Pages (checksum-verified)"
             git push
           fi

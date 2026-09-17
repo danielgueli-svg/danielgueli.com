@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gypsy Jazz Hub — by Daniel Gueli</title>
+  <meta name="description" content="Daniel Gueli built Gypsy Jazz Hub: find jam sessions, musicians, concerts and festivals worldwide on an interactive map." />
+  <meta property="og:title" content="Gypsy Jazz Hub — by Daniel Gueli" />
+  <meta property="og:description" content="Find a gypsy jazz jam near you. Built by Daniel Gueli." />
+  <meta property="og:image" content="img/hero.jpg" />
+  <link rel="icon" href="img/hero.jpg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="page">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="nav">
+    <a class="brand" href="index.html">Daniel Gueli</a>
+    <nav class="nav-links" id="menu">
+      <a href="index.html">Home</a>
+      <a href="index.html#bio">Bio</a>
+      <a href="index.html#shows">Shows</a>
+      <a href="youtube.html">Youtube</a>
+      <a href="hub.html">Gypsy Jazz Hub</a>
+      <a href="index.html#contact">Contact</a>
+    </nav>
+    <button class="nav-toggle" id="menuBtn" aria-label="Menu" aria-expanded="false">☰</button>
+  </header>
+  <main id="main">
+    <div class="page-hero">
+      <div class="wrap">
+        <p class="eyebrow">Project</p>
+        <h1>Gypsy Jazz Hub</h1>
+        <p class="lede">I built a home for our community — jam sessions, musicians, concerts and festivals on a world map. Find a jam near you.</p>
+      </div>
+    </div>
+    <div class="wrap feature-grid">
+      <div>
+        <p class="lead">Gypsy jazz is more than music. It is a living community of players, nights, festivals, and the people who show up.</p>
+        <p><a href="https://www.gypsyjazzhub.com/" target="_blank" rel="noopener"><strong>gypsyjazzhub.com</strong></a> puts that map in one place: where to jam this week, who is playing, camps and workshops, history and news — from Paris to Brooklyn, Amsterdam to Osaka.</p>
+        <ul class="checklist">
+          <li>Interactive globe of jams and events by country</li>
+          <li>Upcoming sessions with venues and times</li>
+          <li>Learn, camps, history, and community news</li>
+          <li>Built for players and listeners who travel with the music</li>
+        </ul>
+        <a class="btn" href="https://www.gypsyjazzhub.com/" target="_blank" rel="noopener">Open Gypsy Jazz Hub</a>
+        <a class="btn ghost" href="https://www.gypsyjazzhub.com/" target="_blank" rel="noopener" style="margin-left:.5rem">Find a jam</a>
+      </div>
+      <aside class="panel">
+        <p class="eyebrow">Watch</p>
+        <h3>Why I made it</h3>
+        <p>Short clips introducing the Hub for the community.</p>
+        <div class="embed" style="margin:1rem 0 1.2rem">
+          <iframe src="https://www.youtube.com/embed/CjMGG2lTlVo" title="Gypsy Jazz Hub — find a jam near you" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        </div>
+        <a class="btn ghost" href="youtube.html">More on YouTube</a>
+      </aside>
+    </div>
+  </main>
+  <footer class="wrap">
+    <p>© Daniel Gueli · Amsterdam · <a href="hub.html">Gypsy Jazz Hub</a></p>
+    <p><a href="https://www.gallistrings.com/en/artists/557-daniel-gueli-eng" target="_blank" rel="noopener">Exclusive Galli Strings — BSN920 Light / Synthesis</a></p>
+  </footer>
+  <script>
+    const btn = document.getElementById('menuBtn');
+    const menu = document.getElementById('menu');
+    btn.addEventListener('click', () => {
+      const open = menu.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open);
+    });
+    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => menu.classList.remove('open')));
+  </script>
+</body>
+</html>

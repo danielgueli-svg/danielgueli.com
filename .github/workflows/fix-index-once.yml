@@ -1,0 +1,32 @@
+name: fix-index-once
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pull exact index.html from Pages and verify
+        run: |
+          set -euo pipefail
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          curl -fsSL -A "$UA" 'https://danielgueli.pages.dev/index.html' -o index.html
+          python3 - <<'PY'
+          import hashlib, pathlib
+          data = pathlib.Path('index.html').read_bytes()
+          expect = '7e0f5bb40d7077fdc70bb4806ae0d9a5b29f28017a723b35d7212872ad755ed5'
+          got = hashlib.sha256(data).hexdigest()
+          assert len(data) == 9251 and got == expect, (len(data), got)
+          print('OK index.html', len(data), got)
+          PY
+      - name: Commit fixed index.html and remove this workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/fix-index-once.yml
+          git add index.html
+          git add -A .github/workflows || true
+          git commit -m "Fix index.html to exact Pages dist bytes; remove one-shot workflow"
+          git push

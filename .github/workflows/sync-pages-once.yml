@@ -1,0 +1,46 @@
+name: sync-pages-once
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync site files from live Pages
+        run: |
+          set -euo pipefail
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          base='https://danielgueli.pages.dev'
+          for f in index.html hub.html youtube.html styles.css; do
+            curl -fsSL -A "$UA" "$base/$f" -o "$f"
+            ls -la "$f"
+          done
+          python3 <<'PY'
+          import hashlib, pathlib
+          expected = {
+            "index.html": ("e3a998490de394fc6bcce7ebdca55c46da5ed575e8938db357f01a038e1bef36", 9679),
+            "hub.html": ("94991bfdf444d12ae2395457f06e07c69aa4f653feeb50d86b51f62a381443f6", 3977),
+            "youtube.html": ("19f2e4298bab7d9507573c57a8475a075852ad287f8b45f5c49536cd31bc6387", 6404),
+            "styles.css": ("1dd6564c4fe8e6698dc2aae7bdd371d1f29830696c27f92efcf4c0db51724b4b", 9658),
+          }
+          for name, (sha_or_prefix, size) in expected.items():
+              data = pathlib.Path(name).read_bytes()
+              got = hashlib.sha256(data).hexdigest()
+              assert len(data) == size, (name, len(data), size)
+              if len(sha_or_prefix) == 64:
+                  assert got == sha_or_prefix, (name, got, sha_or_prefix)
+              else:
+                  assert got.startswith(sha_or_prefix), (name, got, sha_or_prefix)
+              print("OK", name, len(data), got)
+          PY
+      - name: Commit sync and remove workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/sync-pages-once.yml
+          git add -A
+          git status
+          git commit -m "Sync cream site HTML/CSS with live Pages (latest dist)"
+          git push

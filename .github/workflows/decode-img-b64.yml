@@ -1,0 +1,63 @@
+name: decode-img-b64
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  decode:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble and decode image payloads
+        run: |
+          set -euo pipefail
+          mkdir -p img
+          python3 <<'PY'
+          import hashlib, pathlib, base64
+          expected = {
+            "galli.png": ("749dd8cb8c86a270b430b5f68ea8328ab99b68c0a4a90b55678f2bebefbf5709", 6817),
+            "hero.jpg": ("eb074d33b90ec73f17a5d2ba179b206c55e72d701285dfb31ef1c5bba6408630", 187436),
+            "kaap.jpg": ("ebbf974d9ce45122dd622ab8a3824159dd0d67581b0248b335054bea5f013849", 224876),
+            "quartet.jpg": ("dc5e9166b4a93c492dfa09b4434e3641b7ec4ed45ee8a150b68ca8dfe508165b", 300639),
+            "stage.jpg": ("ebe1a780515f663f2b2ad6642735323a08f91eef981635ca131c7213a8278521", 121923),
+            "street.jpg": ("3c746ec88fc07ab925b88a1f0e7de1e5a338b4ef3aa9575de9b108e85db8393b", 277205),
+            "tent.jpg": ("e64d7184287a3a3f0b680f8ae7e9d7889e76471b0becc83fab7c8bdc1ef3c7d3", 196602),
+            "trio.jpg": ("9d8f99b9f5e63f44d9569ee7d149913d9c7043bcfee608311addf88e067b9f42", 266782),
+            "tv.jpg": ("df1196ab998f4c6fa56c8d22cf09eb63bc3887e171aa8fa566c8e5db01607b06", 279121),
+          }
+          parts_dir = pathlib.Path("img/b64_parts")
+          for name, (sha, size) in expected.items():
+              whole = pathlib.Path(f"img/{name}.b64")
+              if whole.exists():
+                  b64 = "".join(whole.read_text().split())
+                  whole.unlink()
+              else:
+                  prefix = f"{name}.b64."
+                  files = sorted(parts_dir.glob(prefix + "*"))
+                  assert files, name
+                  b64 = "".join("".join(p.read_text().split()) for p in files)
+                  for p in files:
+                      p.unlink()
+              data = base64.b64decode(b64)
+              out = pathlib.Path("img") / name
+              out.write_bytes(data)
+              got = hashlib.sha256(data).hexdigest()
+              assert len(data) == size and got == sha, (name, len(data), size, got, sha)
+              print("OK", name, size)
+          if parts_dir.exists():
+              for p in list(parts_dir.iterdir()):
+                  p.unlink()
+              parts_dir.rmdir()
+          PY
+      - name: Commit binary images
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A img/
+          git status
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "Add cream site binary images (decoded from staged base64)"
+            git push
+          fi
